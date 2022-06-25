@@ -1,4 +1,4 @@
-# native_view
+# Transition from native to flutter
 
 A new Flutter project.
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -6,6 +7,53 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Native&Flutter View',
+      theme: ThemeData(
+        primaryColor: Colors.white,
+      ),
+      routes: {
+        '/': (context) => const InitialPage(),
+        '/top': (context) => const TopPage(),
+      },
+    );
+  }
+}
+
+class InitialPage extends StatelessWidget {
+  static const routeName = "/";
+  static const MethodChannel channel = MethodChannel("channel");
+
+  const InitialPage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    channel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'setup':
+          return Navigator.pushNamedAndRemoveUntil(
+            context,
+            TopPage.routeName,
+            (route) => route.isFirst,
+          );
+        default:
+          return Navigator.pushNamedAndRemoveUntil(
+            context,
+            TopPage.routeName,
+            (route) => route.isFirst,
+          );
+      }
+    });
+    return const TopPage();
+  }
+}
+
+class TopPage extends StatelessWidget {
+  static const routeName = "/top";
+  const TopPage({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -102,6 +150,13 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
             ),
+            ElevatedButton(
+              onPressed: () async {
+                const channel = MethodChannel('channel');
+                await channel.invokeMethod('backNative');
+              },
+              child: const Text('back to native'),
+            )
           ],
         ),
       ),

@@ -162,6 +162,8 @@ class CustomScrollViewContentState extends State<CustomScrollViewContent> {
   final _contentKey = GlobalKey();
   double _height = 0;
   bool _visible = true;
+  double _initialChildSize = 0.5;
+  double _minChildSize = 0.5;
 
   @override
   void initState() {
@@ -192,37 +194,60 @@ class CustomScrollViewContentState extends State<CustomScrollViewContent> {
                 color: Colors.blue,
                 child: SizedBox(
                   height: _height,
-                  child: DraggableScrollableSheet(
-                    initialChildSize: 0.5,
-                    minChildSize: 0.5,
-                    maxChildSize: 1,
-                    builder: (context, scrollController) {
-                      return LayoutBuilder(builder: (context, constraints) {
-                        return SingleChildScrollView(
-                          controller: scrollController,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                                minHeight: constraints.maxHeight),
-                            child: Container(
-                              key: _contentKey,
-                              padding: const EdgeInsets.all(20),
-                              color: Colors.cyan,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: <Widget>[
-                                  const Text("Title"),
-                                  const Text("Subtitle"),
-                                  ElevatedButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('close'),
+                  child: DraggableScrollableActuator(
+                    child:
+                        NotificationListener<DraggableScrollableNotification>(
+                      onNotification: (notification) {
+                        print("==extent==");
+                        print(notification.extent);
+                        print("==maxExtent==");
+                        print(notification.maxExtent);
+                        //print("==height==");
+                        //print(notification.context.size?.height ?? 0);
+                        return true;
+                      },
+                      child: DraggableScrollableSheet(
+                        initialChildSize: _initialChildSize,
+                        minChildSize: _minChildSize,
+                        maxChildSize: 1,
+                        snap: true,
+                        builder: (context, scrollController) {
+                          return LayoutBuilder(builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              physics:
+                                  const ClampingScrollPhysics(), // Android scroll behavior set
+                              controller: scrollController,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                    minHeight: constraints.maxHeight),
+                                child: Container(
+                                  key: _contentKey,
+                                  padding: const EdgeInsets.all(20),
+                                  color: Colors.cyan,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: <Widget>[
+                                      const Text("Title"),
+                                      const Text("Subtitle"),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('close'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            DraggableScrollableActuator.reset(
+                                                context),
+                                        child: const Text('reset'),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      });
-                    },
+                            );
+                          });
+                        },
+                      ),
+                    ),
                   ),
                 ),
               )

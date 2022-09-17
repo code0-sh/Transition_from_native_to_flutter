@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 void main() {
@@ -100,23 +101,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -127,20 +117,6 @@ class _MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
@@ -156,7 +132,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 await channel.invokeMethod('backNative');
               },
               child: const Text('back to native'),
-            )
+            ),
+            Expanded(
+              child: Container(),
+            ),
+            const CustomScrollViewContent(),
           ],
         ),
       ),
@@ -165,6 +145,89 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+class CustomScrollViewContent extends StatefulWidget {
+  const CustomScrollViewContent({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    return CustomScrollViewContentState();
+  }
+}
+
+class CustomScrollViewContentState extends State<CustomScrollViewContent> {
+  final _contentKey = GlobalKey();
+  double _height = 0;
+  bool _visible = true;
+
+  @override
+  void initState() {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
+      setState(() {
+        _height = _contentKey.currentContext!.size!.height;
+      });
+    });
+    super.initState();
+  }
+
+  void _showModalBottomSheet() {
+    setState(() {
+      _visible = !_visible;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: _showModalBottomSheet,
+          child: const Text('show modal bottom sheet'),
+        ),
+        _visible
+            ? Container(
+                color: Colors.blue,
+                child: SizedBox(
+                  height: _height,
+                  child: DraggableScrollableSheet(
+                    initialChildSize: 0.5,
+                    minChildSize: 0.5,
+                    maxChildSize: 1,
+                    builder: (context, scrollController) {
+                      return LayoutBuilder(builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          controller: scrollController,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight),
+                            child: Container(
+                              key: _contentKey,
+                              padding: const EdgeInsets.all(20),
+                              color: Colors.cyan,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: <Widget>[
+                                  const Text("Title"),
+                                  const Text("Subtitle"),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('close'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      });
+                    },
+                  ),
+                ),
+              )
+            : Container(),
+      ],
     );
   }
 }
